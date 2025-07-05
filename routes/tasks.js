@@ -34,7 +34,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
   const task = await prisma.task.findUnique({
-    where: { id: parseInt(id) },
+    where: { id: id },
   });
   if (task) {
     res.json(task);
@@ -49,7 +49,7 @@ router.put('/:id', async (req, res) => {
   const { name, description, priority, deadline, percentage, status } = req.body;
   try {
     const task = await prisma.task.update({
-      where: { id: parseInt(id) },
+      where: { id: id },
       data: {
         name,
         description,
@@ -70,7 +70,7 @@ router.patch('/:id/complete', async (req, res) => {
   const { id } = req.params;
   try {
     const task = await prisma.task.update({
-      where: { id: parseInt(id) },
+      where: { id: id },
       data: {
         status: 'DONE',
         percentage: 100,

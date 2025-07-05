@@ -23,7 +23,7 @@ router.post('/request', async (req, res) => {
 router.get('/requests', async (req, res) => {
   const { userId } = req.query;
   const requests = await prisma.supervisorRequest.findMany({
-    where: { supervisorId: parseInt(userId) },
+    where: { supervisorId: userId },
   });
   res.json(requests);
 });
@@ -35,7 +35,7 @@ router.patch('/request/:id', async (req, res) => {
 
   try {
     const request = await prisma.supervisorRequest.update({
-      where: { id: parseInt(id) },
+      where: { id: id },
       data: { status },
     });
 

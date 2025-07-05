@@ -8,7 +8,7 @@ generator client {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
   email     String   @unique
   password  String
   firstName String?
@@ -18,10 +18,12 @@ model User {
   updatedAt DateTime @updatedAt
   tasks     Task[]
   supervisor   User?      @relation("UserToSupervisor", fields: [supervisorId], references: [id])
-  supervisorId Int?
+  supervisorId String?
   subordinates User[]     @relation("UserToSupervisor")
   supervisorRequestsSent      SupervisorRequest[] @relation("RequesterToSupervisorRequest")
   supervisorRequestsReceived  SupervisorRequest[] @relation("SupervisorToSupervisorRequest")
+  leadingGroups Group[] @relation("GroupLeader")
+  groups    GroupMember[]
 }
 
 enum Role {
@@ -30,18 +32,18 @@ enum Role {
 }
 
 model SupervisorRequest {
-  id           Int      @id @default(autoincrement())
+  id           String   @id @default(uuid())
   requester    User     @relation("RequesterToSupervisorRequest", fields: [requesterId], references: [id])
-  requesterId  Int
+  requesterId  String
   supervisor   User     @relation("SupervisorToSupervisorRequest", fields: [supervisorId], references: [id])
-  supervisorId Int
+  supervisorId String
   status       String   @default("PENDING") // PENDING, APPROVED, REJECTED
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
 
 model Task {
-  id          Int       @id @default(autoincrement())
+  id          String    @id @default(uuid())
   name        String
   description String?
   priority    Priority  @default(MEDIUM)
@@ -51,10 +53,12 @@ model Task {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   author      User      @relation(fields: [authorId], references: [id])
-  authorId    Int
+  authorId    String
   parent      Task?     @relation("TaskToTask", fields: [parentId], references: [id])
-  parentId    Int?
+  parentId    String?
   children    Task[]    @relation("TaskToTask")
+  group       Group?    @relation(fields: [groupId], references: [id])
+  groupId     String?
 }
 
 enum Priority {
@@ -67,4 +71,28 @@ enum Status {
   TODO
   IN_PROGRESS
   DONE
+}
+
+model Group {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  leader      User     @relation("GroupLeader", fields: [leaderId], references: [id])
+  leaderId    String
+  members     GroupMember[]
+  tasks       Task[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model GroupMember {
+  id        String   @id @default(uuid())
+  group     Group    @relation(fields: [groupId], references: [id])
+  groupId   String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([groupId, userId])
 }

@@ -9,6 +9,8 @@ var usersRouter = require('./routes/users');
 var authRouter = require('./routes/auth');
 var tasksRouter = require('./routes/tasks');
 var supervisorsRouter = require('./routes/supervisors');
+var subordinatesRouter = require('./routes/subordinates');
+var groupsRouter = require('./routes/groups');
 var authenticateToken = require('./middleware/authenticate');
 
 var app = express();
@@ -24,5 +26,7 @@ app.use('/users', authenticateToken, usersRouter);
 app.use('/auth', authRouter);
 app.use('/tasks', authenticateToken, tasksRouter);
 app.use('/supervisors', authenticateToken, supervisorsRouter);
+app.use('/subordinates', authenticateToken, subordinatesRouter);
+app.use('/groups', authenticateToken, groupsRouter);
 
 module.exports = app;
