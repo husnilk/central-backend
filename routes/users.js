@@ -1,11 +1,12 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-const bcrypt = require('bcrypt');
+const bcrypt = require("bcrypt");
+const authenticateToken = require("../middleware/authenticate");
 
 // Create User
-router.post('/', async (req, res) => {
+router.post("/", authenticateToken, async (req, res) => {
   const { email, password, firstName, lastName, role } = req.body;
   const hashedPassword = await bcrypt.hash(password, 10);
   try {
@@ -18,135 +19,133 @@ router.post('/', async (req, res) => {
         role,
       },
     });
-    res.status(201).json(user);
+    res.status(201).json({
+      status: "success",
+      user: user,
+    });
   } catch (error) {
-    res.status(400).json({ error: 'Email already exists' });
+    res.status(400).json({ error: "Email already exists" });
   }
 });
 
 // List Users
-router.get('/', async (req, res) => {
-  const users = await prisma.user.findMany();
-  res.json(users);
+router.get("/", authenticateToken, async (req, res) => {
+  const users = await prisma.user.findMany({
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      role: true,
+    },
+  });
+  res.json({
+    status: "success",
+    users: users,
+  });
 });
 
 // View User Detail
-router.get('/:id', async (req, res) => {
+router.get("/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
   const user = await prisma.user.findUnique({
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      role: true,
+      createdAt: true,
+      updatedAt: true,
+      supervisorId: true,
+    },
     where: { id: id },
   });
   if (user) {
-    res.json(user);
+    res.json({
+      status: "success",
+      user: user,
+    });
   } else {
-    res.status(404).json({ error: 'User not found' });
+    res.status(404).json({ error: "User not found" });
   }
 });
 
 // Update User
-router.put('/:id', async (req, res) => {
+router.put("/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
-  const { firstName, lastName, role } = req.body;
+  const { email, firstName, lastName, role, supervisorId } = req.body;
   try {
     const user = await prisma.user.update({
       where: { id: id },
       data: {
+        email,
         firstName,
         lastName,
-        role,
+        role: role ? { set: role } : undefined, // role is enum
+        supervisorId,
       },
     });
-    res.json(user);
+    delete user.password; // Remove password from response
+
+    res.json({
+      status: "success",
+      user: user,
+    });
   } catch (error) {
-    res.status(404).json({ error: 'User not found' });
+    console.log(error);
+    res.status(404).json({ error: "User not found" });
   }
 });
 
 // Delete User
-router.delete('/:id', async (req, res) => {
+router.delete("/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
   try {
     await prisma.user.delete({
       where: { id: id },
     });
-    res.status(204).send();
+    res.status(204).json();
   } catch (error) {
-    res.status(404).json({ error: 'User not found' });
+    res.status(404).json({ error: "User not found" });
   }
 });
 
 // Search Users
-router.get('/search/:query', async (req, res) => {
-    const { query } = req.params;
-    const users = await prisma.user.findMany({
-        where: {
-            OR: [
-                {
-                    firstName: {
-                        contains: query,
-                    },
-                },
-                {
-                    lastName: {
-                        contains: query,
-                    },
-                },
-                {
-                    email: {
-                        contains: query,
-                    },
-                },
-            ],
+router.get("/search/:query", authenticateToken, async (req, res) => {
+  const { query } = req.params;
+  const users = await prisma.user.findMany({
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      role: true,
+    },
+    where: {
+      OR: [
+        {
+          firstName: {
+            contains: query,
+          },
         },
-    });
-    res.json(users);
-});
-
-// Get current user's profile
-router.get('/profile', async (req, res) => {
-  const user = await prisma.user.findUnique({
-    where: { id: req.user.id },
-  });
-  res.json(user);
-});
-
-// Update current user's profile
-router.put('/profile', async (req, res) => {
-  const { firstName, lastName } = req.body;
-  try {
-    const user = await prisma.user.update({
-      where: { id: req.user.id },
-      data: {
-        firstName,
-        lastName,
-      },
-    });
-    res.json(user);
-  } catch (error) {
-    res.status(404).json({ error: 'User not found' });
-  }
-});
-
-// Update current user's password
-router.put('/profile/password', async (req, res) => {
-  const { password, newPassword } = req.body;
-  const user = await prisma.user.findUnique({
-    where: { id: req.user.id },
-  });
-
-  if (!user || !await bcrypt.compare(password, user.password)) {
-    return res.status(401).json({ error: 'Invalid credentials' });
-  }
-
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
-  await prisma.user.update({
-    where: { id: req.user.id },
-    data: {
-      password: hashedPassword,
+        {
+          lastName: {
+            contains: query,
+          },
+        },
+        {
+          email: {
+            contains: query,
+          },
+        },
+      ],
     },
   });
-
-  res.json({ message: 'Password updated successfully' });
+  res.json({
+    status: "success",
+    users: users,
+  });
 });
 
 module.exports = router;

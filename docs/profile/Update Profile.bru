@@ -1,0 +1,21 @@
+meta {
+  name: Update Profile
+  type: http
+  seq: 2
+}
+
+put {
+  url: http://{{host}}:{{port}}/api/profile
+  body: formUrlEncoded
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:form-urlencoded {
+  email: newmail@example.com
+  firstName: NewName
+  lastName: Lastname
+}

@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "nodemon ./bin/www",
     "start": "node ./bin/www",
+    "db:migrate": "npx prisma migrate dev",
     "db:seed": "node prisma/seed.js"
   },
   "keywords": [],

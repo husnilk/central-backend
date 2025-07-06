@@ -17,6 +17,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   tasks     Task[]
+  logbooks  Logbook[]
   supervisor   User?      @relation("UserToSupervisor", fields: [supervisorId], references: [id])
   supervisorId String?
   subordinates User[]     @relation("UserToSupervisor")
@@ -59,6 +60,18 @@ model Task {
   children    Task[]    @relation("TaskToTask")
   group       Group?    @relation(fields: [groupId], references: [id])
   groupId     String?
+  logbooks    Logbook[]
+}
+
+model Logbook {
+  id          String    @id @default(uuid())
+  content     String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  task        Task      @relation(fields: [taskId], references: [id])
+  taskId      String
+  author      User      @relation(fields: [authorId], references: [id])
+  authorId    String
 }
 
 enum Priority {

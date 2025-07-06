@@ -1,0 +1,23 @@
+meta {
+  name: Update User
+  type: http
+  seq: 5
+}
+
+put {
+  url: http://{{host}}:{{port}}/api/users/{{user_id}}
+  body: formUrlEncoded
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:form-urlencoded {
+  email: newmail@example.com
+  firstName: First
+  lastName: Last
+  role: USER
+  supervisorId: {{user_id}}
+}
